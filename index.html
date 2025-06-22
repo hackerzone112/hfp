@@ -82,9 +82,85 @@
             background-color: #CBD5E0;
             flex-grow: 1;
         }
+        /* Popup overlay styles */
+        #welcome-popup {
+            position: fixed;
+            z-index: 9999;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 41, 59, 0.96);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.4s;
+        }
+        #welcome-popup.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .popup-bg-logos {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+            overflow: hidden;
+        }
+        .floating-logo {
+            position: absolute;
+            width: 64px;
+            height: 64px;
+            opacity: 0.18;
+            filter: blur(0.5px) drop-shadow(0 2px 8px #0002);
+            transition: opacity 0.2s;
+            will-change: transform;
+        }
+        .popup-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .welcome-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 16px #000a;
+            margin-bottom: 2rem;
+        }
+        .close-popup-btn {
+            background: #588B8B;
+            color: #fff;
+            font-size: 1.2rem;
+            padding: 0.75rem 2.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 8px #0002;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .close-popup-btn:hover {
+            background: #406060;
+            transform: translateY(-2px) scale(1.04);
+        }
     </style>
 </head>
 <body class="bg-beige">
+
+    <!-- Welcome Popup Overlay -->
+    <div id="welcome-popup">
+        <div class="popup-bg-logos" id="popup-bg-logos"></div>
+        <div class="popup-content">
+            <div class="welcome-title">Welcome</div>
+            <button class="close-popup-btn" id="close-popup-btn">Enter</button>
+        </div>
+    </div>
 
     <!-- Header & Navigation -->
     <header class="bg-beige/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
@@ -136,7 +212,7 @@
         <section id="toolkit" class="my-24 scroll-mt-20">
             <div class="text-center mb-12">
                 <h2 class="text-4xl font-bold tracking-tight">Our Development Toolkit</h2>
-                <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">To build our summarizer, we'll use a set of powerful, industry-standard tools. Here’s a quick look at each component and the role it plays in our project.</p>
+                <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">To build our summarizer, we'll use a set of powerful, industry-standard tools. Here's a quick look at each component and the role it plays in our project.</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
                 <div class="bg-white p-6 rounded-xl shadow-lg text-center transform hover:scale-105 transition-transform duration-300">
@@ -396,6 +472,67 @@ iface.launch()</code></pre>
                         behavior: 'smooth'
                     });
                 });
+            });
+
+            // Dynamically floating logos in popup
+            const logos = [
+                // Hugging Face (emoji style)
+                `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill='%23FFD21E'/><text x="32" y="44" font-size="32" text-anchor="middle" fill='%236B7280' font-family='Arial'>🤗</text></svg>`,
+                // OpenAI (stylized hexagon)
+                `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="30" fill='%2300A67E'/><text x="32" y="44" font-size="24" text-anchor="middle" fill='white' font-family='Arial'>OpenAI</text></svg>`,
+                // Spacy (S in a circle)
+                `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="30" fill='%2346A1E2'/><text x="32" y="44" font-size="32" text-anchor="middle" fill='white' font-family='Arial'>S</text></svg>`,
+                // LLM (rounded square)
+                `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill='%2300A67E'/><text x="32" y="44" font-size="24" text-anchor="middle" fill='white' font-family='Arial'>LLM</text></svg>`,
+                // RAG (rounded square)
+                `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill='%2346A1E2'/><text x="32" y="44" font-size="24" text-anchor="middle" fill='white' font-family='Arial'>RAG</text></svg>`,
+                // Generic AI (AI in a circle)
+                `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="30" fill='%23A67E00'/><text x="32" y="44" font-size="24" text-anchor="middle" fill='white' font-family='Arial'>AI</text></svg>`
+            ];
+            const bgLogos = document.getElementById('popup-bg-logos');
+            const logoCount = 100;
+            const logoObjs = [];
+            for (let i = 0; i < logoCount; i++) {
+                const div = document.createElement('div');
+                div.className = 'floating-logo';
+                div.innerHTML = logos[i % logos.length];
+                // Random start position
+                const x = Math.random() * (window.innerWidth - 64);
+                const y = Math.random() * (window.innerHeight - 64);
+                div.style.left = x + 'px';
+                div.style.top = y + 'px';
+                bgLogos.appendChild(div);
+                // Random velocity
+                logoObjs.push({
+                    el: div,
+                    x: x,
+                    y: y,
+                    dx: (Math.random() - 0.5) * 0.7 - 0.2,
+                    dy: (Math.random() - 0.5) * 0.7 - 0.2
+                });
+            }
+            // Animate
+            function animateLogos() {
+                for (const obj of logoObjs) {
+                    obj.x += obj.dx;
+                    obj.y += obj.dy;
+                    // Bounce off edges
+                    if (obj.x < 0 || obj.x > window.innerWidth - 64) obj.dx *= -1;
+                    if (obj.y < 0 || obj.y > window.innerHeight - 64) obj.dy *= -1;
+                    obj.x = Math.max(0, Math.min(obj.x, window.innerWidth - 64));
+                    obj.y = Math.max(0, Math.min(obj.y, window.innerHeight - 64));
+                    obj.el.style.left = obj.x + 'px';
+                    obj.el.style.top = obj.y + 'px';
+                }
+                requestAnimationFrame(animateLogos);
+            }
+            animateLogos();
+            // Popup close logic
+            const popup = document.getElementById('welcome-popup');
+            const closeBtn = document.getElementById('close-popup-btn');
+            closeBtn.addEventListener('click', function() {
+                popup.classList.add('hidden');
+                setTimeout(() => { popup.style.display = 'none'; }, 500);
             });
         });
 
