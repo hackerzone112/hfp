@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Tutorial: Text Summarization with Hugging Face</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Harmony (Beige, Teal, Tan, Charcoal) -->
+    <!-- Application Structure Plan: The application is designed as an interactive, single-page tutorial that guides the user from concept to execution. The structure is thematic and task-oriented rather than mirroring the PDF layout. It starts with fundamental concepts (What is Summarization), introduces the tools (The Toolkit), provides a step-by-step interactive coding guide (The Tutorial), and culminates in a simulated, hands-on demo. This flow was chosen to build knowledge progressively, keeping the user engaged through interactive elements at each stage, making a technical tutorial feel more like an exploratory journey. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Extractive vs. Abstractive concepts -> Goal: Compare -> Viz/Method: Interactive tabs with visual examples -> Interaction: Click to toggle content -> Justification: Makes a dry comparison dynamic and easier to digest. -> Library/Method: Vanilla JS.
+        - Report Info: Required libraries & tools -> Goal: Inform -> Viz/Method: Styled cards in a grid -> Interaction: Subtle hover effects -> Justification: Breaks down the toolkit into manageable, visually distinct components. -> Library/Method: HTML/Tailwind.
+        - Report Info: Python code snippets -> Goal: Inform/Enable -> Viz/Method: Styled <pre><code> blocks with a copy button -> Interaction: Click to copy code -> Justification: Improves usability for users wanting to replicate the code. -> Library/Method: Vanilla JS.
+        - Report Info: The final summarizer functionality -> Goal: Engage/Demonstrate -> Viz/Method: A simulated interactive demo (textarea and button) -> Interaction: User clicks "Summarize" to see a pre-canned output, with a clear message explaining the simulation. -> Justification: This is the app's core interactive element, providing a hands-on feel of the final product without needing a live backend, which is perfect for a single-file SPA. -> Library/Method: Vanilla JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF5;
+            color: #36454F;
+        }
+        .bg-beige { background-color: #FDFBF5; }
+        .bg-tan { background-color: #EAE0D5; }
+        .bg-teal { background-color: #588B8B; }
+        .text-teal { color: #588B8B; }
+        .border-teal { border-color: #588B8B; }
+        .accent-teal { color: #C8D5B9; }
+        .btn-teal {
+            background-color: #588B8B;
+            color: #FFFFFF;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .btn-teal:hover {
+            background-color: #4A7474;
+            transform: translateY(-2px);
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #588B8B;
+            border-bottom-color: #588B8B;
+        }
+        .concept-btn.active {
+            background-color: #588B8B;
+            color: #FFFFFF;
+        }
+        .concept-btn {
+            transition: all 0.3s;
+        }
+        .code-block {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4a5568;
+            color: #e2e8f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #718096;
+        }
+        .step-circle {
+            background-color: #588B8B;
+            color: white;
+            width: 3rem;
+            height: 3rem;
+        }
+        .step-line {
+            width: 2px;
+            background-color: #CBD5E0;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body class="bg-beige">
+
+    <!-- Header & Navigation -->
+    <header class="bg-beige/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-2xl font-bold text-teal">Interactive Summarizer Tutorial</h1>
+                </div>
+                <nav class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#concepts" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Concepts</a>
+                        <a href="#toolkit" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Toolkit</a>
+                        <a href="#tutorial" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Tutorial</a>
+                        <a href="#demo" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Live Demo</a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <!-- Section 1: Concepts -->
+        <section id="concepts" class="my-16 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold tracking-tight">Understanding Text Summarization</h2>
+                <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Before we build, let's understand the core ideas. This section introduces the "what" and "how" of summarization, setting the stage for our hands-on tutorial.</p>
+            </div>
+            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+                <div class="text-center mb-6">
+                    <p class="text-xl font-semibold">What are the different approaches?</p>
+                    <div class="inline-flex rounded-md shadow-sm mt-4" role="group">
+                        <button type="button" id="extractive-btn" class="concept-btn active px-6 py-3 text-sm font-medium border border-gray-200 rounded-l-lg focus:z-10 focus:ring-2 focus:ring-teal">
+                            Extractive
+                        </button>
+                        <button type="button" id="abstractive-btn" class="concept-btn px-6 py-3 text-sm font-medium border border-gray-200 rounded-r-md focus:z-10 focus:ring-2 focus:ring-teal">
+                            Abstractive
+                        </button>
+                    </div>
+                </div>
+
+                <div id="concept-content">
+                    <!-- Content will be injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: The Toolkit -->
+        <section id="toolkit" class="my-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold tracking-tight">Our Development Toolkit</h2>
+                <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">To build our summarizer, we'll use a set of powerful, industry-standard tools. Here’s a quick look at each component and the role it plays in our project.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-5xl mb-4">🤗</div>
+                    <h3 class="text-xl font-semibold mb-2">Hugging Face</h3>
+                    <p class="text-gray-600">The leading platform for open-source AI models and tools. We'll use their `transformers` library to access our pre-trained model.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-5xl mb-4">🤖</div>
+                    <h3 class="text-xl font-semibold mb-2">T5 Model</h3>
+                    <p class="text-gray-600">The "Text-to-Text Transfer Transformer." It's a versatile model that treats every NLP task, including summarization, as a text generation problem.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-lg text-center transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-5xl mb-4">🔥</div>
+                    <h3 class="text-xl font-semibold mb-2">PyTorch</h3>
+                    <p class="text-gray-600">A popular deep learning framework that acts as the backend for our transformer model, handling all the heavy computational lifting.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg text-center transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-5xl mb-4">🎨</div>
+                    <h3 class="text-xl font-semibold mb-2">Gradio</h3>
+                    <p class="text-gray-600">A Python library that makes it incredibly easy to create a simple, shareable web UI for any machine learning model.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: The Tutorial -->
+        <section id="tutorial" class="my-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold tracking-tight">The Step-by-Step Tutorial</h2>
+                <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Now for the hands-on part! Follow these steps to build the summarizer from scratch. Each block of code is explained and can be copied easily.</p>
+            </div>
+            <div class="max-w-3xl mx-auto">
+                <div class="flex flex-col items-center">
+
+                    <!-- Step 1 -->
+                    <div class="flex w-full mb-8">
+                        <div class="flex flex-col items-center mr-6">
+                            <div class="step-circle flex items-center justify-center font-bold text-xl">1</div>
+                            <div class="step-line mt-2"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg w-full">
+                            <h3 class="text-2xl font-semibold mb-3">Install Required Libraries</h3>
+                            <p class="text-gray-600 mb-4">First, we need to install all the necessary Python packages. This single command line will fetch everything we need.</p>
+                            <div class="code-block p-4">
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                <pre><code class="language-bash">pip install transformers torch gradio datasets</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div class="flex w-full mb-8">
+                         <div class="flex flex-col items-center mr-6">
+                            <div class="step-circle flex items-center justify-center font-bold text-xl">2</div>
+                            <div class="step-line mt-2"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg w-full">
+                            <h3 class="text-2xl font-semibold mb-3">Load the Model & Tokenizer</h3>
+                            <p class="text-gray-600 mb-4">Here, we import classes from the `transformers` library and load our pre-trained `t5-small` model and its corresponding tokenizer.</p>
+                            <div class="code-block p-4">
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                <pre><code class="language-python">from transformers import T5Tokenizer, T5ForConditionalGeneration
+
+model_name = 't5-small'
+tokenizer = T5Tokenizer.from_pretrained(model_name)
+model = T5ForConditionalGeneration.from_pretrained(model_name)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                     <div class="flex w-full mb-8">
+                         <div class="flex flex-col items-center mr-6">
+                            <div class="step-circle flex items-center justify-center font-bold text-xl">3</div>
+                            <div class="step-line mt-2"></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg w-full">
+                            <h3 class="text-2xl font-semibold mb-3">Create the Summarization Function</h3>
+                            <p class="text-gray-600 mb-4">This function contains the core logic. It takes text, prepares it for the model (tokenization), generates the summary, and then decodes it back into human-readable text.</p>
+                             <div class="code-block p-4">
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                <pre><code class="language-python">def summarize(text):
+    inputs = tokenizer.encode("summarize: " + text,
+                              return_tensors="pt", max_length=1024, truncation=True)
+    
+    summary_ids = model.generate(inputs, max_length=150,
+                                 min_length=40, length_penalty=2.0, 
+                                 num_beams=4, early_stopping=True)
+    
+    summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    return summary</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4 -->
+                    <div class="flex w-full">
+                         <div class="flex flex-col items-center mr-6">
+                            <div class="step-circle flex items-center justify-center font-bold text-xl">4</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg w-full">
+                            <h3 class="text-2xl font-semibold mb-3">Launch the Web Interface</h3>
+                            <p class="text-gray-600 mb-4">Finally, we use `Gradio` to wrap our `summarize` function in a simple web UI. This makes our model easily accessible to anyone.</p>
+                             <div class="code-block p-4">
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                <pre><code class="language-python">import gradio as gr
+
+iface = gr.Interface(fn=summarize, inputs="text", outputs="text",
+                     title="Text Summarization with T5",
+                     description="Enter text to get a summarized version.")
+iface.launch()</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Live Demo -->
+        <section id="demo" class="my-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold tracking-tight">Try it Out! (Live Demo)</h2>
+                <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Experience the summarizer firsthand. Paste the sample text or your own to see how it works. This is a front-end simulation of the Gradio interface we just built.</p>
+            </div>
+            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+                <div id="demo-disclaimer" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-md" role="alert">
+                  <p class="font-bold">Front-End Demo</p>
+                  <p>This is a simulation. To process custom text, the Python code must be run on a server. The summary for our sample text is shown below as an example of the model's output.</p>
+                </div>
+                <div>
+                    <label for="input-text" class="block text-sm font-medium text-gray-700 mb-2">Enter Text to Summarize:</label>
+                    <textarea id="input-text" rows="8" class="w-full p-3 border border-gray-300 rounded-md focus:ring-teal focus:border-teal"></textarea>
+                </div>
+                <div class="mt-4 text-center">
+                    <button id="summarize-btn" class="btn-teal font-bold py-3 px-8 rounded-lg shadow-md">
+                        Summarize
+                    </button>
+                </div>
+                <div class="mt-8">
+                     <label for="output-text" class="block text-sm font-medium text-gray-700 mb-2">Generated Summary:</label>
+                    <div id="output-text" class="w-full p-4 border bg-gray-50 border-gray-200 rounded-md min-h-[100px]"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-tan mt-20">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-700">
+            <p>Interactive application created based on the GeeksforGeeks article on Text Summarization.</p>
+            <p class="text-sm mt-1">Powered by Hugging Face Transformers & Tailwind CSS.</p>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const conceptContent = document.getElementById('concept-content');
+            const extractiveBtn = document.getElementById('extractive-btn');
+            const abstractiveBtn = document.getElementById('abstractive-btn');
+            
+            const concepts = {
+                extractive: {
+                    title: "Extractive Summarization",
+                    description: "This method works by identifying and pulling out the most important sentences or phrases directly from the original text. It's like using a highlighter to select key parts and stitching them together.",
+                    pros: ["Maintains factual accuracy since it uses original text.", "Simpler and faster to compute."],
+                    cons: ["Can lack fluency and good narrative flow.", "May contain redundant information."]
+                },
+                abstractive: {
+                    title: "Abstractive Summarization",
+                    description: "This advanced method involves generating entirely new sentences that capture the essence of the original text. It understands the content and rephrases it, much like a human would.",
+                    pros: ["Produces fluent, concise, and coherent summaries.", "Can avoid redundancy and paraphrase complex ideas."],
+                    cons: ["Computationally more complex and intensive.", "Carries a risk of 'hallucination' (generating incorrect facts)."]
+                }
+            };
+
+            function renderConcept(concept) {
+                let prosList = concept.pros.map(pro => `<li class="flex items-start"><span class="text-green-500 mr-2">✔</span>${pro}</li>`).join('');
+                let consList = concept.cons.map(con => `<li class="flex items-start"><span class="text-red-500 mr-2">✖</span>${con}</li>`).join('');
+
+                conceptContent.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                        <div class="p-4 rounded-lg bg-gray-50">
+                            <h4 class="text-lg font-semibold mb-2">${concept.title}</h4>
+                            <p class="text-gray-600 mb-4">${concept.description}</p>
+                        </div>
+                        <div>
+                            <div class="mb-4">
+                                <h5 class="font-semibold mb-2">Pros</h5>
+                                <ul class="space-y-1 text-gray-700">${prosList}</ul>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold mb-2">Cons</h5>
+                                <ul class="space-y-1 text-gray-700">${consList}</ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            extractiveBtn.addEventListener('click', () => {
+                renderConcept(concepts.extractive);
+                extractiveBtn.classList.add('active');
+                abstractiveBtn.classList.remove('active');
+            });
+
+            abstractiveBtn.addEventListener('click', () => {
+                renderConcept(concepts.abstractive);
+                abstractiveBtn.classList.add('active');
+                extractiveBtn.classList.remove('active');
+            });
+            
+            renderConcept(concepts.extractive);
+
+            // Demo functionality
+            const sampleText = `The Hugging Face library has revolutionized the field of natural language processing with its transformers library. This library provides state-of-the-art models for various NLP tasks including text summarization, text classification, question answering, and more. With easy-to-use APIs and pre-trained models, developers can quickly integrate advanced NLP capabilities into their applications. The community-driven approach ensures continuous improvement and innovation in the library, making it a valuable resource for both researchers and practitioners.`;
+            const sampleSummary = `the transformers library provides state-of-the-art models for various NLP tasks. developers can quickly integrate advanced NLP capabilities into their applications. the community-driven approach ensures continuous improvement and innovation in the library.`;
+
+            const inputText = document.getElementById('input-text');
+            const outputText = document.getElementById('output-text');
+            const summarizeBtn = document.getElementById('summarize-btn');
+            const disclaimer = document.getElementById('demo-disclaimer');
+
+            inputText.value = sampleText;
+
+            summarizeBtn.addEventListener('click', () => {
+                const userText = inputText.value.trim();
+                if (userText !== sampleText.trim()) {
+                    disclaimer.classList.remove('hidden');
+                } else {
+                    disclaimer.classList.add('hidden');
+                }
+                
+                outputText.innerHTML = '';
+                let i = 0;
+                summarizeBtn.disabled = true;
+                summarizeBtn.textContent = 'Summarizing...';
+
+                function typeWriter() {
+                    if (i < sampleSummary.length) {
+                        outputText.innerHTML += sampleSummary.charAt(i);
+                        i++;
+                        setTimeout(typeWriter, 10);
+                    } else {
+                        summarizeBtn.disabled = false;
+                        summarizeBtn.textContent = 'Summarize';
+                    }
+                }
+                typeWriter();
+            });
+            
+            // Smooth scroll for navigation
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+
+        function copyCode(button) {
+            const pre = button.parentElement;
+            const code = pre.querySelector('code');
+            const text = code.innerText;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            button.innerText = 'Copied!';
+            setTimeout(() => {
+                button.innerText = 'Copy';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
